@@ -64,8 +64,11 @@ pipeline {
                     fi
                     chmod 666 count.txt
                     
-                    # Run the new container locally
-                    docker run -d --name ${CONTAINER_NAME} -p ${APP_PORT}:${APP_PORT} ${IMAGE_NAME}:${BUILD_ID}
+                    # Get the Jenkins container's network dynamically
+                    JENKINS_NETWORK=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' $(hostname))
+                    
+                    # Run the new container locally, attached to the Jenkins network
+                    docker run -d --name ${CONTAINER_NAME} --network ${JENKINS_NETWORK} -p ${APP_PORT}:${APP_PORT} ${IMAGE_NAME}:${BUILD_ID}
                 '''
             }
         }
@@ -76,11 +79,8 @@ pipeline {
                     # Wait for application to start
                     sleep 5
                     
-                    # Get the container's IP address dynamically
-                    CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_NAME})
-                    
-                    # Test if the API is responding using the container IP
-                    curl http://${CONTAINER_IP}:${APP_PORT}/api/hello
+                    # Test if the API is responding using the container name directly!
+                    curl http://${CONTAINER_NAME}:${APP_PORT}/api/hello
                 '''
             }
         }
