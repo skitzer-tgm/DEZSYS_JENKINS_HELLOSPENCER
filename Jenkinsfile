@@ -76,8 +76,11 @@ pipeline {
                     # Wait for application to start
                     sleep 5
                     
-                    # Test if the API is responding
-                    curl http://localhost:${APP_PORT}/api/hello
+                    # Get the container's IP address dynamically
+                    CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_NAME})
+                    
+                    # Test if the API is responding using the container IP
+                    curl http://${CONTAINER_IP}:${APP_PORT}/api/hello
                 '''
             }
         }
